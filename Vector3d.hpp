@@ -33,12 +33,8 @@ class Vector3d {
         bool operator==(const Vector3d& other) const;
         Vector3d operator+(const Vector3d& other) const;
         Vector3d operator-(const Vector3d& other) const;
-        Vector3d operator*(int scalar) const {
-            return Vector3d(x * scalar, y * scalar, z * scalar);
-        }
-        Vector3d operator/(int scalar) const {
-            return Vector3d(x / scalar, y / scalar, z / scalar);
-        }
+        Vector3d operator*(int scalar) const;
+        Vector3d operator/(int scalar) const;
         int dot_mul(const Vector3d& other) const;
         Vector3d cross_mul(const Vector3d& other) const;
         double abs() const;

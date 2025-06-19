@@ -18,6 +18,12 @@ Vector3d Vector3d::operator+(const Vector3d& other) const {
 Vector3d Vector3d::operator-(const Vector3d& other) const {
     return Vector3d(x-other.x, y-other.y, z-other.z);
 }
+Vector3d Vector3d::operator*(int scalar) const {
+    return Vector3d(x * scalar, y * scalar, z * scalar);
+}
+Vector3d Vector3d::operator/(int scalar) const {
+    return Vector3d(x / scalar, y / scalar, z / scalar);
+}
 int Vector3d::dot_mul(const Vector3d& other) const {
     return int(x*other.x + y*other.y + z*other.z);
 }
