@@ -1,9 +1,16 @@
 #include "Fraction.hpp"
 #include <string>
 #include <cmath>
+#include <stdexcept>
 
 // static
+
+int Fraction::default_precision = 6; // default precision for double to fraction conversion
+
 int Fraction::find_gcf(int n1, int n2) {
+    if (n1 == 0 && n2 == 0) {
+        throw std::invalid_argument("GCF is undefined for (0, 0)");
+    }
     int tmp;
     if (n1 < n2) {
         std::swap(n1, n2);
@@ -15,9 +22,51 @@ int Fraction::find_gcf(int n1, int n2) {
     }
     return n1;
 }
+long long Fraction::find_gcf(long long n1, long long n2) {
+    if (n1 == 0 && n2 == 0) {
+        throw std::invalid_argument("GCF is undefined for (0, 0)");
+    }
+    long long tmp;
+    if (n1 < n2) {
+        std::swap(n1, n2);
+    }
+    while (n2 != 0) {
+        tmp = n2;
+        n2 = n1 % n2;
+        n1 = tmp;
+    }
+    return n1;
+}
 
-Fraction::GCF_Function_Ptr Fraction::find_greatest_common_factor = &find_gcf;
 
+Fraction Fraction::get_fraction_from_double(double value, unsigned int precision) {
+    if (!std::isfinite(value)) {
+        throw std::invalid_argument("Value must be finite");
+    }
+    if (precision == 0) {
+        return Fraction(static_cast<int>(std::round(value)), 1);
+    }
+    double factor = std::pow(10, precision);
+    if (std::abs(value * factor) > static_cast<double>(LLONG_MAX)) {
+        throw std::overflow_error("Value is too large to convert to fraction");
+    }
+    long long numerator_ll = static_cast<long long>(std::round(value * factor));
+    long long denominator_ll = static_cast<long long>(factor);
+    if (numerator_ll == 0) {
+        return Fraction(0, 1);
+    }
+    long long gcf = find_gcf(numerator_ll, denominator_ll);
+    numerator_ll /= gcf;
+    denominator_ll /= gcf;
+    if (denominator_ll == 0) {
+        throw std::logic_error("Fraction::get_fraction_from_double: ***Unreachable code***: denominator cannot be 0");
+    }
+    if (numerator_ll < INT_MAX && numerator_ll > INT_MIN &&
+        denominator_ll < INT_MAX && denominator_ll > INT_MIN) {
+        return Fraction(static_cast<int>(numerator_ll), static_cast<int>(denominator_ll));
+    }
+    throw std::runtime_error("Fraction::get_fraction_from_double: numerator or denominator exceeds int limits");
+}
 
 // public
 // Constructor
@@ -26,6 +75,11 @@ Fraction::Fraction(const int& dividend, const int& divisor) : numerator(dividend
         throw ZeroDivisionException("Fraction::Fraction ZeroDivErr: divisor cannot be 0");
     }
     simplify();
+}
+Fraction::Fraction(double value, unsigned int precision) {
+    Fraction tmp = get_fraction_from_double(value, precision);
+    numerator = tmp.numerator;
+    denominator = tmp.denominator;
 }
 
 void Fraction::simplify() {
@@ -69,18 +123,40 @@ void Fraction::set_denominator(int new_denominator) {
 std::string Fraction::to_string(bool add_prefix) const {
     return (add_prefix? "Fraction(" : "(") + std::to_string(numerator) + "/" + std::to_string(denominator) + ")";
 }
-float Fraction::get_in_float() const {
-    return static_cast<float>(numerator)/denominator;
+double Fraction::get_in_double() const {
+    return static_cast<double>(numerator)/denominator;
 }
 int Fraction::floor() const {
-    return std::floor(get_in_float());
+    return std::floor(get_in_double());
 }
 int Fraction::ceil() const {
-    return std::ceil(get_in_float());
+    return std::ceil(get_in_double());
 }
 std::pair<int, Fraction> Fraction::get_mixed_fraction() const {
     int integral_part = floor();
     return {integral_part, Fraction(numerator-integral_part*denominator, denominator)};
+}
+
+
+
+Fraction& Fraction::operator=(const Fraction& other) {
+    if (this == &other) {
+        return *this; // self-assignment check
+    }
+    numerator = other.numerator;
+    denominator = other.denominator;
+    return *this;
+}
+Fraction& Fraction::operator=(int num) {
+    numerator = num;
+    denominator = 1;
+    return *this;
+}
+Fraction& Fraction::operator=(double value) {
+    Fraction tmp = get_fraction_from_double(value);
+    numerator = tmp.numerator;
+    denominator = tmp.denominator;
+    return *this;
 }
 
 
@@ -143,6 +219,9 @@ Fraction Fraction::operator*(const int& num) const {
     return Fraction(numerator*num, denominator);
 }
 Fraction Fraction::operator/(const int& num) const {
+    if (num == 0) {
+        throw ZeroDivisionException("Fraction::operator/(int) ZeroDivErr: divisor cannot be 0");
+    }
     return Fraction(numerator, denominator*num);
 }
 
@@ -157,7 +236,7 @@ Fraction Fraction::operator/(const int& num) const {
 //     std::cout << f1.numerator << ", " << f1.denominator << std::endl;
 //     std::cout << f1.floor() << ", " << f1.get_mixed_fraction().second.numerator << std::endl;
 //     std::cout 
-//         << "float:" << f.get_in_float() << ", floor:" << f.floor() << ", ceil:" << f.ceil() 
+//         << "float:" << f.get_in_double() << ", floor:" << f.floor() << ", ceil:" << f.ceil() 
 //         << ", mixed:" << f.get_mixed_fraction().first 
 //         << "+" << f.get_mixed_fraction().second.numerator << "/" << f.get_mixed_fraction().second.denominator << std::endl;
 // }
