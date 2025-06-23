@@ -2,7 +2,7 @@
 
 #include <stdexcept>
 
-explicit Matrix::Matrix(const std::vector<std::vector<double>>& arg_data) 
+Matrix::Matrix(const std::vector<std::vector<double>>& arg_data) 
     : data(arg_data), num_of_row(arg_data.size()) {
         if (num_of_row == 0) {
             num_of_col = 0;
@@ -15,7 +15,7 @@ explicit Matrix::Matrix(const std::vector<std::vector<double>>& arg_data)
             }
         }
 }
-explicit Matrix::Matrix(size_t arg_num_of_row, size_t arg_num_of_col, double default_val) 
+Matrix::Matrix(size_t arg_num_of_row, size_t arg_num_of_col, double default_val) 
     : num_of_row(arg_num_of_row), num_of_col(arg_num_of_col) {
         data.resize(num_of_row);
         for (auto& row : data) {
@@ -42,17 +42,17 @@ Matrix& Matrix::operator=(const std::vector<std::vector<double>>& arg_data) {
     }
     data = arg_data;
     num_of_row = data.size();
-    if (num_of_row == 0) {
-        num_of_col = 0;
-        return;
-    }
+    // if (num_of_row == 0) {
+    //     num_of_col = 0;
+    //     return *this;
+    // }
     num_of_col = data[0].size();
     for (auto it = data.begin(); it != data.end(); ++it) {
         if (num_of_col != (*it).size()) {
             throw std::invalid_argument("Matrix::Matrix: UnequalRowSize: all rows must have the same number of columns");
         }
     }
-
+    return *this;
 }
 
 bool Matrix::operator==(const Matrix& other) const {
