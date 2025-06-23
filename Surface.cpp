@@ -12,8 +12,9 @@ void Surface::compute_cache() const {
     x_vector_cache = Vector3d(basis_matrix[0][0], basis_matrix[1][0], basis_matrix[2][0]);
     y_vector_cache = Vector3d(basis_matrix[0][1], basis_matrix[1][1], basis_matrix[2][1]);
     normal_vector_cache = x_vector_cache.cross_mul(y_vector_cache);
-    x_magnitude_cache = x_vector_cache.abs();
-    y_magnitude_cache = y_vector_cache.abs();
+    normal_unit_vector_cache = normal_vector_cache.unit_vector();
+    x_magnitude_cache = x_vector_cache.magnitude();
+    y_magnitude_cache = y_vector_cache.magnitude();
     unit_x_vector_cache = x_vector_cache / x_magnitude_cache;
     unit_y_vector_cache = y_vector_cache / y_magnitude_cache;
     cache_valid = true;
@@ -21,7 +22,7 @@ void Surface::compute_cache() const {
 
 
 
-explicit Surface::Surface(const Matrix& arg_basis_matrix) : basis_matrix(arg_basis_matrix), cache_valid(false) {
+Surface::Surface(const Matrix& arg_basis_matrix) : basis_matrix(arg_basis_matrix), cache_valid(false) {
     set_basis(arg_basis_matrix); // Validate and set the basis matrix
 }
 
@@ -32,11 +33,16 @@ void Surface::set_basis(const Matrix& new_basis_matrix) {
     if (new_basis_matrix.get_num_of_col() != 2 || new_basis_matrix.get_num_of_row() != 3) {
         throw std::invalid_argument("Surface::set_basis: InvalidArgErr: xy must be a matrix with 2 columns and 3 rows");
     }
-    if (Utils::double_equal(new_basis_matrix[0][0], 0) || Utils::double_equal(new_basis_matrix[1][0], 0)) {
+    Vector3d x_vector(new_basis_matrix[0][0], new_basis_matrix[1][0], new_basis_matrix[2][0]);
+    Vector3d y_vector(new_basis_matrix[0][1], new_basis_matrix[1][1], new_basis_matrix[2][1]);
+    if (x_vector.is_equal(Vector3d())) {
         throw std::invalid_argument("Surface::set_basis: InvalidArgErr: x vector cannot be a zero vector");
     }
-    if (Utils::double_equal(new_basis_matrix[0][1], 0) || Utils::double_equal(new_basis_matrix[1][1], 0)) {
+    if (y_vector.is_equal(Vector3d())) {
         throw std::invalid_argument("Surface::set_basis: InvalidArgErr: y vector cannot be a zero vector");
+    }
+    if (x_vector.cross_mul(y_vector).is_equal(Vector3d())) {
+        throw std::invalid_argument("Surface::set_basis: InvalidArgErr: x and y vectors must be non-parallel");
     }
     basis_matrix = new_basis_matrix;
     cache_valid = false; // Invalidate the cache
@@ -62,6 +68,12 @@ Vector3d Surface::get_normal_vector() const {
         compute_cache();
     }
     return normal_vector_cache;
+}
+Vector3d Surface::get_unit_normal_vector() const {
+    if (!cache_valid) {
+        compute_cache();
+    }
+    return normal_unit_vector_cache;
 }
 
 double Surface::get_x_magnitude() const {

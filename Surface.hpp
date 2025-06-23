@@ -12,6 +12,7 @@ class Surface {
         mutable Vector3d x_vector_cache;
         mutable Vector3d y_vector_cache;
         mutable Vector3d normal_vector_cache;
+        mutable Vector3d normal_unit_vector_cache;
         mutable double x_magnitude_cache;
         mutable double y_magnitude_cache;
         mutable Vector3d unit_x_vector_cache;
@@ -40,6 +41,7 @@ class Surface {
         Vector3d get_x_vector() const;
         Vector3d get_y_vector() const;
         Vector3d get_normal_vector() const;
+        Vector3d get_unit_normal_vector() const;
         double get_x_magnitude() const;
         double get_y_magnitude() const;
         Vector3d get_unit_x_vector() const;
