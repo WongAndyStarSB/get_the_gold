@@ -9,9 +9,12 @@ class Matrix {
         size_t num_of_row;
         size_t num_of_col;
     public:
-        explicit Matrix(const std::vector<std::vector<double>>& arg_data);
-        explicit Matrix(size_t arg_num_of_row, size_t arg_num_of_col, double default_val = 0.0);
+        const bool is_size_changeable;
+
+        explicit Matrix(const std::vector<std::vector<double>>& arg_data, bool arg_is_size_changeable = true);
+        explicit Matrix(size_t arg_num_of_row, size_t arg_num_of_col, double default_val = 0.0, bool arg_is_size_changeable = true);
         inline Matrix(const Matrix&) = default;
+        Matrix(const Matrix& other, bool arg_is_size_changeable);
         inline Matrix(Matrix&&) = default;
 
         Matrix& operator=(const Matrix& other);
@@ -27,6 +30,10 @@ class Matrix {
         size_t get_num_of_row() const;
         size_t get_num_of_col() const;
         std::vector<std::vector<double>> get_data() const;
+
+        bool is_size_equal(size_t row, size_t col) const;
+
+        std::vector<double> get_column(size_t col_index) const;
 
         void resize(size_t new_num_of_row, size_t new_num_of_col, double default_val);
         void resize(size_t new_num_of_row, double default_val = 0.0);

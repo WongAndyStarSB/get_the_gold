@@ -2,8 +2,8 @@
 
 #include <stdexcept>
 
-Matrix::Matrix(const std::vector<std::vector<double>>& arg_data) 
-    : data(arg_data), num_of_row(arg_data.size()) {
+Matrix::Matrix(const std::vector<std::vector<double>>& arg_data, bool arg_is_size_changeable) 
+    : data(arg_data), num_of_row(arg_data.size()), is_size_changeable(arg_is_size_changeable) {
         if (num_of_row == 0) {
             num_of_col = 0;
             return;
@@ -15,8 +15,8 @@ Matrix::Matrix(const std::vector<std::vector<double>>& arg_data)
             }
         }
 }
-Matrix::Matrix(size_t arg_num_of_row, size_t arg_num_of_col, double default_val) 
-    : num_of_row(arg_num_of_row), num_of_col(arg_num_of_col) {
+Matrix::Matrix(size_t arg_num_of_row, size_t arg_num_of_col, double default_val, bool arg_is_size_changeable) 
+    : num_of_row(arg_num_of_row), num_of_col(arg_num_of_col), is_size_changeable(arg_is_size_changeable) {
         data.resize(num_of_row);
         for (auto& row : data) {
             row.reserve(num_of_col);
@@ -25,6 +25,9 @@ Matrix::Matrix(size_t arg_num_of_row, size_t arg_num_of_col, double default_val)
             }
         }
 
+}
+Matrix::Matrix(const Matrix& other, bool arg_is_size_changeable) 
+    : num_of_row(other.num_of_row), num_of_col(other.num_of_col), data(other.data), is_size_changeable(arg_is_size_changeable) {
 }
 Matrix& Matrix::operator=(const Matrix& other) {
     if (this == &other) {
@@ -92,8 +95,28 @@ size_t Matrix::get_num_of_col() const {
 std::vector<std::vector<double>> Matrix::get_data() const {
     return data;
 }
+bool Matrix::is_size_equal(size_t row, size_t col) const {
+    return (row == num_of_row) && (col = num_of_col);
+}
+std::vector<double> Matrix::get_column(size_t col_index) const {
+    std::vector<double> vect;
+    if (num_of_row == 0) {
+        return vect;
+    }
+    if (col_index >= num_of_col) {
+        throw std::invalid_argument("Matrix::get_straight_row: InvalidArgErr/IndexErr: col_index cannot be >= to num_of_col");
+    }
+    vect.reserve(num_of_row);
+    for (const std::vector<double>& row : data) {
+        vect.emplace_back(row[col_index]);
+    }
+    return vect;
+}
 
 void Matrix::resize(size_t new_num_of_row, size_t new_num_of_col, double default_val) {
+    if (!is_size_changeable) {
+        throw std::runtime_error("Matrix::resize ChangingNonChangeableSize");
+    }
     if (new_num_of_row == 0) {
         data.clear();
         num_of_row = 0;
@@ -109,6 +132,9 @@ void Matrix::resize(size_t new_num_of_row, size_t new_num_of_col, double default
 }
 
 void Matrix::resize(size_t new_num_of_row, double default_val) {
+    if (!is_size_changeable) {
+        throw std::runtime_error("Matrix::resize ChangingNonChangeableSize");
+    }
     if (new_num_of_row == 0) {
         data.clear();
         num_of_row = 0;
@@ -120,12 +146,18 @@ void Matrix::resize(size_t new_num_of_row, double default_val) {
 }
 
 void Matrix::clear() {
+    if (!is_size_changeable) {
+        throw std::runtime_error("Matrix::resize ChangingNonChangeableSize");
+    }
     data.clear();
     num_of_row = 0;
     num_of_col = 0;
 }
 
 void Matrix::emplace_back(const std::vector<double>& row) {
+    if (!is_size_changeable) {
+        throw std::runtime_error("Matrix::resize ChangingNonChangeableSize");
+    }
     if (row.size() != num_of_col) {
         throw std::invalid_argument("Matrix::emplace_back: InvalidArgErr: Row size does not match matrix column size");
     }
