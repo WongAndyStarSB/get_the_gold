@@ -2,7 +2,7 @@
 
 #include "Pos3d.hpp"
 #include "Vector2d.hpp"
-#include "Surface.hpp"
+#include "Matrix.hpp"
 #include "Vector3d.hpp"
 
 #include <cmath>
@@ -14,19 +14,18 @@ Shape2d& Shape2d::operator=(const Shape2d& other) {
     if (this == &other) {
         return *this; // self-assignment check
     }
-    centre_pos = other.centre_pos;
-    surface = other.surface;
+    centre = other.centre;
+    basis = other.basis;
     return *this;
 }
-
 // Assignment operators of subclasses
 
 Circle& Circle::operator=(const Circle& other) {
     if (this == &other) {
         return *this; // self-assignment check
     }
-    centre_pos = other.centre_pos;
-    surface = other.surface;
+    centre = other.centre;
+    basis = other.basis;
     radius = other.radius;
     return *this;
 }
@@ -36,8 +35,8 @@ Rect& Rect::operator=(const Rect& other) {
     if (this == &other) {
         return *this; // self-assignment check
     }
-    centre_pos = other.centre_pos;
-    surface = other.surface;
+    centre = other.centre;
+    basis = other.basis;
     width = other.width;
     height = other.height;
     return *this;
@@ -51,30 +50,18 @@ Rect& Rect::operator=(const Rect& other) {
 
 
 Pos3d Rect::top_left_pos() const {
-    Vector3d v = surface.surface_to_world_vector(
-        Vector2d(-width/2, height/2)
-    );
-    return centre_pos + v;
+    return centre + basis.local_to_world(Vector2d(-width/2, height/2));
 }
 
 
 Pos3d Rect::top_right_pos() const {
-    Vector3d v = surface.surface_to_world_vector(
-        Vector2d(width/2, height/2)
-    );
-    return centre_pos + v;
+    return centre + basis.local_to_world(Vector2d(width/2, height/2));
 }
 
 Pos3d Rect::bottom_left_pos() const {
-    Vector3d v = surface.surface_to_world_vector(
-        Vector2d(-width/2, -height/2)
-    );
-    return centre_pos + v;
+    return centre + basis.local_to_world(Vector2d(-width/2, -height/2));
 }
 
 Pos3d Rect::bottom_right_pos() const {
-    Vector3d v = surface.surface_to_world_vector(
-        Vector2d(width/2, -height/2)
-    );
-    return centre_pos + v;
+    return centre + basis.local_to_world(Vector2d(width/2, -height/2));
 }

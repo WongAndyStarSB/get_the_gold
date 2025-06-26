@@ -16,6 +16,7 @@ class Vector3d {
         {}
         inline Vector3d(const Vector3d&) = default;
         inline Vector3d(Vector3d&&) = default;
+        Vector3d(const std::vector<double>& std_vector);
 
         
 
@@ -30,20 +31,28 @@ class Vector3d {
             return *this;
         }
 
-        std::string to_string() const;
+        std::string to_string(bool add_prefix = true) const;
 
         // Operators
-        
+
+        double& operator[](size_t index);
+        const double& operator[](size_t index) const;
+
         Vector3d operator+(const Vector3d& other) const;
         Vector3d operator-(const Vector3d& other) const;
         Vector3d operator*(double scalar) const;
         Vector3d operator/(double scalar) const;
         double dot_mul(const Vector3d& other) const;
         Vector3d cross_mul(const Vector3d& other) const;
-        double abs() const;
+        double magnitude() const;
+        Vector3d unit_vector() const;
 
+        bool is_zero_vector(double precision = 1e-6) const;
         bool is_equal(const Vector3d& other, double precision = 1e-6) const;
         bool is_parallel(const Vector3d& other, double precision = 1e-6) const;
+        bool is_perpendicular(const Vector3d& other, double precision = 1e-6) const;
+
+        static Vector3d zero_vector();
 };
 
 
