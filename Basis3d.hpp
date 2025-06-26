@@ -19,7 +19,7 @@ class Basis3d : public Matrix {
         void set_basis_yz(const Vector3d& y, const Vector3d& z);
         void set_basis_zx(const Vector3d& z, const Vector3d& x);
         void set_basis(const Vector3d& x, const Vector3d& y, const Vector3d& z);
-
+        
         
         inline Vector3d x_axis() const { return get_column(0); }
         inline Vector3d y_axis() const { return get_column(1); }
