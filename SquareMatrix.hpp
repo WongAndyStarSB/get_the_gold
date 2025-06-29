@@ -1,6 +1,8 @@
 #ifndef SQUARE_MATRIX_HPP
 #define SQUARE_MATRIX_HPP
 
+// #include "Matrix.hpp"
+
 #include <array>
 #include <vector>
 #include <stdexcept>
@@ -80,7 +82,7 @@ class SquareMatrix {
             }
             return true;
         }
-        inline bool operator!=(const SquareMatrix& other) const {
+        inline bool operator!=(const SquareMatrix<N>& other) const {
             return !operator==(other);
         }
 
@@ -97,8 +99,8 @@ class SquareMatrix {
         inline const std::array<double, N>& operator[](size_t index) const {
             if (index >= N) {
                 Logger::log_and_throw<std::out_of_range>(
-                    "SquareMatrix<" + std::to_string(N) + ">::operator[]", 
-                    "(const) index(" + std::to_string(index) + ") out of range (0 to N-1)"
+                    "SquareMatrix<" + std::to_string(N) + ">::operator[] (const)", 
+                    "index(" + std::to_string(index) + ") out of range (0 to N-1)"
                 );
             }
             return data[index];
@@ -163,7 +165,7 @@ class SquareMatrix {
             }
             return result;
         }
-
+        // inline SquareMatrix<N> operator*(const SquareMatrix<N> other) const {}
 
         inline SquareMatrix<N> operator*(double scalar) {
             SquareMatrix<N> result;
@@ -184,6 +186,11 @@ class SquareMatrix {
             return result;
         }
         
+        inline SquareMatrix<N>& operator*=(const SquareMatrix<N>& other) {
+            this->data = operator*(other).data;
+            return *this;
+        }
+
         inline SquareMatrix<N> transpose() const {
             if (N == 1) {
                 return SquareMatrix<1>(data[0][0]);
@@ -282,15 +289,15 @@ class SquareMatrix {
                 // }
                 // } mine {
                 double result = 0;
-                SquareMatrix<N-1> sub_matrix;
+                SquareMatrix<N-1> minor_matrix;
                 std::array<double, N-1> tmp_arr;
                 for (size_t r = 0; r < N-1; ++r) {
                     for (size_t c = 0; c < N-1; ++c) {
-                        sub_matrix[r][c] = data[r+1][c+1];
+                        minor_matrix[r][c] = data[r+1][c+1];
                     }
                 }
                 for (size_t r = 0; r < N; ++r) {
-                    result += ((r % 2 == 1)? -1 : 1) * data[r][0] * sub_matrix.determinant();
+                    result += ((r % 2 == 1)? -1 : 1) * data[r][0] * minor_matrix.determinant();
                     if (r == N-1) {
                         return result;
                     }
@@ -299,7 +306,11 @@ class SquareMatrix {
                     for (size_t i = 0; i < N-1; ++i) {
                         tmp_arr[i] = data[r][i+1];
                     }
-                    sub_matrix[r] = tmp_arr;
+                    minor_matrix[r] = tmp_arr;
+                    Logger::log_and_throw<runtime_error>(
+                        "SquareMatrix::<" + std::to_string(N) + ">",
+                        "UNREACHEABLE"
+                    )
                 }
                 // } AI {
                 // double result = 0.0;
@@ -324,7 +335,7 @@ class SquareMatrix {
 
         inline std::string to_string(bool add_prefix = true, size_t decimal_point = 3, std::string elem_sep = ", ", std::string line_sep = "], \n [", std::string front = "[[", std::string end = "]]") {
             std::string result;
-            result += (add_prefix? "Matrix(\n" : "(\n") + front;
+            result += (add_prefix? "SquareMatrix(\n" : "(\n") + front;
             for (size_t r = 0; r < N; ++r) {
                 for (size_t c = 0; c < N; ++c) {
                     result += 
@@ -351,6 +362,7 @@ class SquareMatrix {
         inline SquareMatrix<N> T() const { return transpose(); }
         inline SquareMatrix<N> Neg1() const { return inverse(); }
         inline static constexpr SquareMatrix<N> I() { return IndentityMatrix(); }
+        inline static constexpr SquareMatrix<N> O() { return SquareMatrix<N>(0); }
         
 };
 
