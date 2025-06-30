@@ -20,17 +20,17 @@ class SquareMatrix : public Matrix<N, N> {
         inline constexpr SquareMatrix(
             const std::array<std::array<double, N>, N>& arg_data
         ) noexcept
-         : Matrix(arg_data) {
+         : Matrix<N, N>(arg_data) {
         }
         inline constexpr explicit SquareMatrix(
             const double& default_val = 0.0
         ) noexcept
-         : Matrix(default_val) {
+         : Matrix<N, N>(default_val) {
         }
         inline explicit SquareMatrix(
             const std::vector<std::vector<double>>& arg_data
         ) noexcept
-         : Matrix(arg_data) {
+         : Matrix<N, N>(arg_data) {
         }
 
         // copy constructor
@@ -335,12 +335,12 @@ class SquareMatrix : public Matrix<N, N> {
                         tmp_arr[i] = data[r][i+1];
                     }
                     minor_matrix[r] = tmp_arr;
-                    log_and_throw<runtime_error>(
+                }
+                log_and_throw<std::runtime_error>(
                         "determinant() const",
                         "UNREACHEABLE"
-                    )
-                    throw;
-                }
+                );
+                throw;
                 // } AI {
                 // double result = 0.0;
                 // for (size_t col = 0; col < N; ++col) {
@@ -397,7 +397,7 @@ class SquareMatrix : public Matrix<N, N> {
         
     private:
 
-        inline void log(const std::string& func_name, const std::string& message, const Logger::LogLevel& log_level, bool add_timestamp) {
+        inline void log(const std::string& func_name, const std::string& message, const Logger::LogLevel& log_level, bool add_timestamp) const {
             Logger::log(
                 "SquareMatrix<" + std::to_string(N) + ">::" + func_name, 
                 message, 
@@ -407,7 +407,7 @@ class SquareMatrix : public Matrix<N, N> {
         }
 
         template <typename ExceptionType = std::runtime_error>
-        [[noreturn]] inline void log_and_throw(const std::string& func_name, const std::string& message) {
+        [[noreturn]] inline void log_and_throw(const std::string& func_name, const std::string& message) const {
             Logger::log_and_throw<ExceptionType>(
                 "SquareMatrix<" + std::to_string(N) + ">::" + func_name, 
                 message);

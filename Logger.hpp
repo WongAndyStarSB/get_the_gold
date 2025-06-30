@@ -19,17 +19,18 @@ namespace Logger {
         DEBUG
     };
 
-    class see_above : public std::exception {
+    class SeeAbove : public std::exception {
         std::string msg_;
         public:
-            inline explicit see_above(
+            inline explicit SeeAbove(
                 const std::string& message
-            ) : msg_("<see_above> " + message) {}
+            ) : msg_("<SeeAbove> " + message) {}
 
             inline const char* what() const noexcept override {
                 return msg_.c_str();
             }
     };
+    
 
     void log(const std::string& func_name, const std::string& message, LogLevel lev, bool add_timestamp = true);
     
