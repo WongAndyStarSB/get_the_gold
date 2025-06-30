@@ -16,8 +16,9 @@ class Matrix { // fixed sized Matrix with elem type using double
     public:
         std::array<std::array<double, ColN>, RowN> data;
         
-        inline constexpr size_t num_of_row() { return RowN; }
-        inline constexpr size_t num_of_col() { return ColN; }
+        inline constexpr std::pair<size_t, size_t> size() const { return std::make_pair(RowN, ColN); }
+        inline constexpr size_t num_of_row() const { return RowN; }
+        inline constexpr size_t num_of_col() const { return ColN; }
 
         inline constexpr Matrix(
             const std::array<std::array<double, ColN>, RowN>& arg_data
@@ -37,19 +38,19 @@ class Matrix { // fixed sized Matrix with elem type using double
         ) {
             try {
                 assign_with_vector(arg_data);
-            } catch (std::invalid_argument& e) {
-                log_and_throw<std::invalid_argument>("Matrix", e.what());
+            } catch (std::exception& e) {
+                log_and_throw<Logger::SeeAbove>("Matrix", e.what());
             }
         }
 
         inline Matrix(const Matrix<RowN, ColN>&) = default;
-        inline Matrix(Matrix<RowN, ColN>&&) = default;
+        inline Matrix(Matrix<RowN, ColN>&&) noexcept = default;
 
         inline Matrix<RowN, ColN>& operator=(const Matrix<RowN, ColN>& other) {
             if (this == &other) { // self-assignment check
                 return *this;  
             }
-            data = other;
+            data = other.data;
             return *this;
         }
         inline Matrix<RowN, ColN>& operator=(Matrix<RowN, ColN>&& other) noexcept = default;
@@ -62,8 +63,9 @@ class Matrix { // fixed sized Matrix with elem type using double
             try {
                 return assign_with_vector(arg_data);
             } catch (std::invalid_argument& e) {
-                log_and_throw<std::invalid_argument>(
+                log_and_throw<Logger::SeeAbove>(
                     "operator=", e.what());
+                throw;
             }
         }
 
@@ -72,17 +74,19 @@ class Matrix { // fixed sized Matrix with elem type using double
             if (arg_data.size() != RowN) {
                 log_and_throw<std::invalid_argument>(
                     "assign_with_vector", 
-                    "arg_data must have the same size as N");
+                    "arg_data must have the same size as RowN");
+                throw;
             }
             for (auto it = arg_data.cbegin(); it != arg_data.cend(); ++it) {
                 if ((*it).size() != ColN) {
                     log_and_throw<std::invalid_argument>(
                         "assign_with_vector", 
-                        "all rows of arg_data must have the same size as N");
+                        "all rows of arg_data must have the same size as ColN");
+                    throw;
                 }
             }
-            for (size_t r = 0; r < N; ++r) {
-                for (size_t c = 0; c < N; ++c) {
+            for (size_t r = 0; r < RowN; ++r) {
+                for (size_t c = 0; c < ColN; ++c) {
                     data[r][c] = arg_data[r][c];
                 }
             }
@@ -90,8 +94,8 @@ class Matrix { // fixed sized Matrix with elem type using double
         }
 
         inline bool operator==(const Matrix<RowN, ColN>& other) const {
-            for (size_t r = 0; r < N; ++r) {
-                for (size_t c = 0; c < N; ++c) {
+            for (size_t r = 0; r < RowN; ++r) {
+                for (size_t c = 0; c < ColN; ++c) {
                     if (data[r][c] != other[r][c]) {
                         return false;
                     }
@@ -106,18 +110,20 @@ class Matrix { // fixed sized Matrix with elem type using double
         inline std::array<double, ColN>& operator[](size_t index) {
             if (index >= RowN) {
                 log_and_throw<std::out_of_range>(
-                    "operator[]", 
+                    "operator[](size_t index)", 
                     "index(" + std::to_string(index) + ") out of range (0 to RowN-1)"
                 );
+                throw;
             }
             return data[index];
         }
         inline const std::array<double, ColN>& operator[](size_t index) const {
             if (index >= RowN) {
                 log_and_throw<std::out_of_range>(
-                    "operator[] (const)", 
+                    "operator[](size_t index) const", 
                     "index(" + std::to_string(index) + ") out of range (0 to RowN-1)"
                 );
+                throw;
             }
             return data[index];
         }
@@ -129,12 +135,13 @@ class Matrix { // fixed sized Matrix with elem type using double
         inline std::array<double, RowN> get_column(size_t col_index) const {
             if (col_index >= ColN) {
                 log_and_throw<std::out_of_range>(
-                    "get_column", 
-                    "col_index out of range (0 to N-1)"
+                    "get_column(size_t col_index) const", 
+                    "col_index out of range (0 to ColN-1)"
                 );
+                throw;
             }
-            std::array<double, N> column;
-            for (size_t i = 0; i < N; ++i) {
+            std::array<double, RowN> column;
+            for (size_t i = 0; i < RowN; ++i) {
                 column[i] = data[i][col_index];
             }
             return column;
@@ -183,7 +190,7 @@ class Matrix { // fixed sized Matrix with elem type using double
             return result;
         }
 
-        inline Matrix<RowN, ColN> operator*(double scalar) {
+        inline Matrix<RowN, ColN> operator*(double scalar) const {
             Matrix<RowN, ColN> result;
             for (size_t r = 0; r < RowN; ++r) {
                 for (size_t c = 0; c < ColN; ++c) {
@@ -192,7 +199,13 @@ class Matrix { // fixed sized Matrix with elem type using double
             }
             return result;
         }
-        inline Matrix<RowN, ColN> operator/(double scalar) {
+        inline Matrix<RowN, ColN> operator/(double scalar) const {
+            if (scalar == 0) {
+                log_and_throw(
+                    "operator/(double scalar) const", 
+                    "scalar cannot be 0");
+                throw;
+            }
             Matrix<RowN, ColN> result;
             for (size_t r = 0; r < RowN; ++r) {
                 for (size_t c = 0; c < ColN; ++c) {
@@ -202,26 +215,43 @@ class Matrix { // fixed sized Matrix with elem type using double
             return result;
         }
         
-        inline Matrix<RowN, ColN>& operator+=(const Matrix<RowN, ColN>& other) {
-            this->data = operator+(other).data;
+        inline Matrix<RowN, ColN>& operator+=(const Matrix<RowN, ColN>& other) noexcept {
+            for (size_t r = 0; r < RowN; ++r) {
+                for (size_t c = 0; c < ColN; ++c) {
+                    data[r][c] += other[r][c];
+                }
+            }
             return *this;
         }
-        inline Matrix<RowN, ColN>& operator-=(const Matrix<RowN, ColN>& other) {
-            this->data = operator-(other).data;
-            return *this;
-        }
-        template <size_t oColN>
-        inline Matrix<RowN, oColN>& operator*=(const Matrix<ColN, oColN>& other) {
-            *this = operator*(other);
+        inline Matrix<RowN, ColN>& operator-=(const Matrix<RowN, ColN>& other) noexcept {
+            for (size_t r = 0; r < RowN; ++r) {
+                for (size_t c = 0; c < ColN; ++c) {
+                    data[r][c] -= other[r][c];
+                }
+            }
             return *this;
         }
 
-        inline Matrix<RowN, ColN>& operator*=(double scalar) {
-            this->data = operator*(scalar).data;
+        inline Matrix<RowN, ColN>& operator*=(double scalar) noexcept {
+            for (size_t r = 0; r < RowN; ++r) {
+                for (size_t c = 0; c < ColN; ++c) {
+                    data[r][c] *= scalar;
+                }
+            }
             return *this;
         }
         inline Matrix<RowN, ColN>& operator/=(double scalar) {
-            this->data = operator/(scalar).data;
+            if (scalar == 0) {
+                log_and_throw(
+                    "operator/=(double scalar)", 
+                    "scalar cannot be 0");
+                throw;
+            }
+            for (size_t r = 0; r < RowN; ++r) {
+                for (size_t c = 0; c < ColN; ++c) {
+                    data[r][c] /= scalar;
+                }
+            }
             return *this;
         }
         
@@ -230,16 +260,22 @@ class Matrix { // fixed sized Matrix with elem type using double
                 return Matrix<1, 1>(data[0][0]);
             }
             Matrix<ColN, RowN> result;
-            for (size_t r = 0; r < rowN; ++r) {
+            for (size_t r = 0; r < RowN; ++r) {
                 for (size_t c = 0; c < ColN; ++c) { 
-                    result[r][c] = data[c][r];
+                    result[c][r] = data[r][c];
                 }
             }
             return result;
         }
 
 
-        inline std::string to_string(bool add_prefix = true, size_t decimal_point = 3, std::string elem_sep = ", ", std::string line_sep = "], \n [", std::string front = "[[", std::string end = "]]") {
+        inline std::string to_string(
+            bool add_prefix = true, 
+            std::string elem_sep = ", ", 
+            std::string line_sep = "], \n [", 
+            std::string front = "[[", 
+            std::string end = "]]"
+        ) const {
             std::string result;
             result += (add_prefix? "Matrix(\n" : "(\n") + front;
             for (size_t r = 0; r < RowN; ++r) {
@@ -255,14 +291,27 @@ class Matrix { // fixed sized Matrix with elem type using double
         }
 
         inline Matrix<RowN, ColN> T() const { return transpose(); }
-        inline static constexpr Matrix<RowN, ColN> O() { return SquareMatrix<N>(0); }
+        inline static constexpr Matrix<RowN, ColN> O() { return Matrix<RowN, ColN>(0); }
 
     private:
+        
+        void log(const std::string& func_name, const std::string& message, const Logger::LogLevel& log_level, bool add_timestamp) {
+            Logger::log(
+                "Matrix<" + std::to_string(RowN) + ", " 
+                    + std::to_string(ColN) + ">::" 
+                    + func_name, 
+                message, 
+                log_level, 
+                add_timestamp
+            );
+        }
+
         template <typename ExceptionType = std::runtime_error>
-        _NORETURN void log_and_throw(const std::string& func_name, const std::string& message) {
+        [[noreturn]] void log_and_throw(const std::string& func_name, const std::string& message) {
             Logger::log_and_throw<ExceptionType>(
-                "Matrix<" + std::to_string(RowN) + ", " + std::to_string(ColN) 
-                    + ">::" + func_name, 
+                "Matrix<" + std::to_string(RowN) + ", " 
+                    + std::to_string(ColN) + ">::" 
+                    + func_name, 
                 message);
         }
 

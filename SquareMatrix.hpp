@@ -1,7 +1,7 @@
 #ifndef SQUARE_MATRIX_HPP
 #define SQUARE_MATRIX_HPP
 
-// #include "Matrix.hpp"
+#include "Matrix.hpp"
 
 #include <array>
 #include <vector>
@@ -11,76 +11,61 @@
 #include "Logger.hpp"
 
 template <const size_t N>
-class SquareMatrix {
-    static_assert(N > 0, "Matrix size must be positive");
+class SquareMatrix : public Matrix<N, N> {
+    static_assert(N > 0, "SquareMatrix: N(size) must be positive");
+
     public:
-        std::array<std::array<double, N>, N> data;
-        inline constexpr size_t size() const { return N; }
+        using Matrix<N, N>::data;
 
-        inline constexpr SquareMatrix(const std::array<std::array<double, N>, N>& arg_data) 
-            : data(arg_data) {
+        inline constexpr SquareMatrix(
+            const std::array<std::array<double, N>, N>& arg_data
+        ) noexcept
+         : Matrix(arg_data) {
         }
-        inline constexpr explicit SquareMatrix(const double& default_val = 0.0) {
-            for (auto it = data.begin(); it != data.end(); ++it) {
-                for (auto jt = it->begin(); jt != it->end(); ++jt) {
-                    (*jt) = default_val;
-                }
-            }
+        inline constexpr explicit SquareMatrix(
+            const double& default_val = 0.0
+        ) noexcept
+         : Matrix(default_val) {
         }
-        inline explicit SquareMatrix(const std::vector<std::vector<double>>& arg_data) {
-            assign_with_vector(arg_data);
+        inline explicit SquareMatrix(
+            const std::vector<std::vector<double>>& arg_data
+        ) noexcept
+         : Matrix(arg_data) {
         }
 
-        inline SquareMatrix(const SquareMatrix<N>&) = default;
-        inline SquareMatrix(SquareMatrix<N>&&) = default;
+        // copy constructor
+        inline SquareMatrix(const SquareMatrix<N>& other) = default;
+        // move constructor
+        inline SquareMatrix(SquareMatrix<N>&& other) noexcept = default;
 
+        // assignment operator
         inline SquareMatrix<N>& operator=(const SquareMatrix<N>& other) {
             if (this == &other) { // self-assignment check
-                return *this;  
+                return *this;
             }
-            data = other;
-            return *this;
+            return this->Matrix<N, N>::operator=(other);
         }
+        // move assignment operator
         inline SquareMatrix<N>& operator=(SquareMatrix<N>&& other) noexcept = default;
-
-        inline SquareMatrix<N>& operator=(const std::array<std::array<double, N>, N>& other) {
-            data = other;
-            return *this;
+        // array assignment operator
+        inline SquareMatrix<N>& operator=(const std::array<std::array<double, N>, N>& arg_data) {
+            return this->Matrix<N, N>::operator=(arg_data);
         }
+        // vector assignment operator
         inline SquareMatrix<N>& operator=(const std::vector<std::vector<double>>& arg_data) {
-            return assign_with_vector(arg_data);
-        }
-
-        inline SquareMatrix<N>& assign_with_vector(const std::vector<std::vector<double>>& arg_data) {
-            if (arg_data.size() != N) {
-                Logger::log_and_throw<std::invalid_argument>(
-                    "SquareMatrix<" + std::to_string(N) + ">::SquareMatrix", 
-                    "arg_data must have the same size as N");
+            try {
+                return this->Matrix<N, N>::operator=(arg_data);
+            } catch (const std::exception& e) {
+                log_and_throw<Logger::SeeAbove>(
+                    "operator=(const std::vector<std::vector<double>>& arg_data)",
+                    e.what()
+                );
+                throw;
             }
-            for (auto it = arg_data.cbegin(); it != arg_data.cend(); ++it) {
-                if ((*it).size() != N) {
-                    Logger::log_and_throw<std::invalid_argument>(
-                        "SquareMatrix<" + std::to_string(N) + ">::SquareMatrix", 
-                        "all rows of arg_data must have the same size as N");
-                }
-            }
-            for (size_t r = 0; r < N; ++r) {
-                for (size_t c = 0; c < N; ++c) {
-                    data[r][c] = arg_data[r][c];
-                }
-            }
-            return *this;
         }
 
         inline bool operator==(const SquareMatrix<N>& other) const {
-            for (size_t r = 0; r < N; ++r) {
-                for (size_t c = 0; c < N; ++c) {
-                    if (data[r][c] != other[r][c]) {
-                        return false;
-                    }
-                }
-            }
-            return true;
+            return Matrix<N, N>::operator==(other);
         }
         inline bool operator!=(const SquareMatrix<N>& other) const {
             return !operator==(other);
@@ -88,43 +73,46 @@ class SquareMatrix {
 
 
         inline std::array<double, N>& operator[](size_t index) {
-            if (index >= N) {
-                Logger::log_and_throw<std::out_of_range>(
-                    "SquareMatrix<" + std::to_string(N) + ">::operator[]", 
-                    "index(" + std::to_string(index) + ") out of range (0 to N-1)"
+            try {
+                return Matrix<N, N>::operator[](index);
+            } catch (const std::exception& e) {
+                log_and_throw<Logger::SeeAbove>(
+                    "operator[](size_t index)", 
+                    e.what()
                 );
+                throw;
             }
-            return data[index];
         }
         inline const std::array<double, N>& operator[](size_t index) const {
-            if (index >= N) {
-                Logger::log_and_throw<std::out_of_range>(
-                    "SquareMatrix<" + std::to_string(N) + ">::operator[] (const)", 
-                    "index(" + std::to_string(index) + ") out of range (0 to N-1)"
+            try {
+                return Matrix<N, N>::operator[](index);
+            } catch (const std::exception& e) {
+                log_and_throw<Logger::SeeAbove>(
+                    "operator[](size_t index) const",
+                    e.what()
                 );
+                throw;
             }
-            return data[index];
         }
 
-        inline bool is_size_equal(size_t arg_size) const {
+        inline constexpr bool is_size_equal(size_t arg_size) const noexcept {
             return arg_size == N;
         }
 
         inline std::array<double, N> get_column(size_t col_index) const {
-            if (col_index >= N) {
-                Logger::log_and_throw<std::out_of_range>(
-                    "SquareMatrix<" + std::to_string(N) + ">::get_column: ", 
-                    "col_index out of range (0 to N-1)"
+            try {
+                return Matrix<N, N>::get_column(col_index);
+            } 
+            catch (const std::exception& e) {
+                log_and_throw<Logger::SeeAbove>(
+                    "get_column(size_t col_index)", 
+                    e.what()
                 );
+                throw;
             }
-            std::array<double, N> column;
-            for (size_t i = 0; i < N; ++i) {
-                column[i] = data[i][col_index];
-            }
-            return column;
         }
 
-        inline SquareMatrix<N> operator-() const { // negative operator
+        inline constexpr SquareMatrix<N> operator-() const noexcept { // negative operator
             SquareMatrix<N> result;
             for (size_t r = 0; r < N; ++r) {
                 for (size_t c = 0; c < N; ++c) {
@@ -133,7 +121,7 @@ class SquareMatrix {
             }
             return result;
         }
-        inline SquareMatrix<N> operator+(const SquareMatrix<N>& other) const {
+        inline constexpr SquareMatrix<N> operator+(const SquareMatrix<N>& other) const noexcept {
             SquareMatrix<N> result;
             for (size_t r = 0; r < N; ++r) {
                 for (size_t c = 0; c < N; ++c) {
@@ -142,7 +130,7 @@ class SquareMatrix {
             }
             return result;
         }
-        inline SquareMatrix<N> operator-(const SquareMatrix<N>& other) const { // minus operator
+        inline constexpr SquareMatrix<N> operator-(const SquareMatrix<N>& other) const noexcept { // minus operator
             SquareMatrix<N> result;
             for (size_t r = 0; r < N; ++r) {
                 for (size_t c = 0; c < N; ++c) {
@@ -151,7 +139,7 @@ class SquareMatrix {
             }
             return result;
         }
-        inline SquareMatrix<N> operator*(const SquareMatrix<N>& other) const {
+        inline constexpr SquareMatrix<N> operator*(const SquareMatrix<N>& other) const noexcept {
             SquareMatrix<N> result;
             double tmp;
             for (size_t rr = 0; rr < N; ++rr) {
@@ -167,7 +155,7 @@ class SquareMatrix {
         }
         // inline SquareMatrix<N> operator*(const SquareMatrix<N> other) const {}
 
-        inline SquareMatrix<N> operator*(double scalar) {
+        inline constexpr SquareMatrix<N> operator*(double scalar) const noexcept {
             SquareMatrix<N> result;
             for (size_t r = 0; r < N; ++r) {
                 for (size_t c = 0; c < N; ++c) {
@@ -176,7 +164,13 @@ class SquareMatrix {
             }
             return result;
         }
-        inline SquareMatrix<N> operator/(double scalar) {
+        inline SquareMatrix<N> operator/(double scalar) const {
+            if (scalar == 0) {
+                log_and_throw<std::domain_error>(
+                    "operator/(double scalar) const", 
+                    "scalar cannot be 0. attempts to do ZeroDivision.");
+                throw;
+            }
             SquareMatrix<N> result;
             for (size_t r = 0; r < N; ++r) {
                 for (size_t c = 0; c < N; ++c) {
@@ -186,12 +180,43 @@ class SquareMatrix {
             return result;
         }
         
-        inline SquareMatrix<N>& operator*=(const SquareMatrix<N>& other) {
-            this->data = operator*(other).data;
+        inline SquareMatrix<N>& operator+=(const SquareMatrix<N>& other) noexcept {
+            for (size_t r = 0; r < N; ++r)
+                for (size_t c = 0; c < N; ++c)
+                    data[r][c] += other[r][c];
+            return *this;
+        }
+        inline SquareMatrix<N>& operator-=(const SquareMatrix<N>& other) noexcept {
+            for (size_t r = 0; r < N; ++r)
+                for (size_t c = 0; c < N; ++c)
+                    data[r][c] -= other[r][c];
+            return *this;
+        }
+        inline SquareMatrix<N>& operator*=(const SquareMatrix<N>& other) noexcept {
+            data = operator*(other).data;
+            return *this;
+        }
+        
+        inline SquareMatrix<N>& operator*=(double scalar) {
+            for (size_t r = 0; r < N; ++r)
+                for (size_t c = 0; c < N; ++c)
+                    data[r][c] *= scalar;
+            return *this;
+        }
+        inline SquareMatrix<N>& operator/=(double scalar) {
+            if (scalar == 0) {
+                log_and_throw<std::domain_error>(
+                    "operator/=(double scalar)", 
+                    "scalar cannot be 0. attempts to do ZeroDivision.");
+                throw;
+            }
+            for (size_t r = 0; r < N; ++r)
+                for (size_t c = 0; c < N; ++c)
+                    data[r][c] /= scalar;
             return *this;
         }
 
-        inline SquareMatrix<N> transpose() const {
+        inline constexpr SquareMatrix<N> transpose() const noexcept {
             if (N == 1) {
                 return SquareMatrix<1>(data[0][0]);
             }
@@ -206,9 +231,10 @@ class SquareMatrix {
         inline SquareMatrix<N> inverse() const {
             double det = determinant();
             if (det == 0) {
-                Logger::log_and_throw<std::runtime_error>(
-                    "SquareMatrix::inverse", 
-                    "Matrix is singular/non-invertible(determinant is zero)");
+                log_and_throw<std::runtime_error>(
+                    "inverse() const", 
+                    "this SquareMatrix is singular/non-invertible(determinant is zero)");
+                throw;
             }
             if constexpr (N==1) {
                 return SquareMatrix<1>(1/data[0][0]);
@@ -232,10 +258,11 @@ class SquareMatrix {
 
         inline SquareMatrix<N-1> matrix_of_minor(size_t row, size_t col) const {
             if constexpr (N==1) {
-                Logger::log_and_throw<std::logic_error>(
-                    "SquareMatrix<1>::matrix_of_minor", 
+                log_and_throw<std::logic_error>(
+                    "matrix_of_minor(size_t row, size_t col) const", 
                     "should not be called when N = 1"
                 );
+                throw;
             } else {
                 SquareMatrix<N-1> minor;
                 for (size_t mr = 0; mr < N-1; ++mr) {
@@ -261,9 +288,10 @@ class SquareMatrix {
         
         inline double determinant() const {
             if constexpr (N == 0) {
-                Logger::log_and_throw<std::runtime_error>(
-                    "SquareMatrix::<" + std::to_string(N) + ">", 
+                log_and_throw<std::runtime_error>(
+                    "determinant() const", 
                     "determinant NEVER 0");
+                throw;
             }
             else if constexpr (N == 1) {
                 return data[0][0];
@@ -307,10 +335,11 @@ class SquareMatrix {
                         tmp_arr[i] = data[r][i+1];
                     }
                     minor_matrix[r] = tmp_arr;
-                    Logger::log_and_throw<runtime_error>(
-                        "SquareMatrix::<" + std::to_string(N) + ">",
+                    log_and_throw<runtime_error>(
+                        "determinant() const",
                         "UNREACHEABLE"
                     )
+                    throw;
                 }
                 // } AI {
                 // double result = 0.0;
@@ -333,37 +362,56 @@ class SquareMatrix {
             }
         }
 
-        inline std::string to_string(bool add_prefix = true, size_t decimal_point = 3, std::string elem_sep = ", ", std::string line_sep = "], \n [", std::string front = "[[", std::string end = "]]") {
-            std::string result;
-            result += (add_prefix? "SquareMatrix(\n" : "(\n") + front;
-            for (size_t r = 0; r < N; ++r) {
-                for (size_t c = 0; c < N; ++c) {
-                    result += 
-                        std::to_string(std::round(data[r][c])) 
-                        + (c < N-1? elem_sep : "");
-                }
-                result += (r < N-1? line_sep : end);
-            }
-            result += "\n)";
-            return result;
+        inline std::string to_string(
+            bool add_prefix = true, 
+            std::string elem_sep = ", ", 
+            std::string line_sep = "], \n [", 
+            std::string front = "[[", 
+            std::string end = "]]"
+        ) const {
+            return 
+                (add_prefix? "SquareMatrix<" + std::to_string(N) + ">" : "") 
+                + Matrix<N, N>::to_string(false, elem_sep, line_sep, front, end)
+            ;
         }
 
         
 
-        inline static constexpr SquareMatrix<N> IdentityMatrix() {
-            constexpr SquareMatrix<N> I(0);
+        inline static constexpr SquareMatrix<N> IdentityMatrix() noexcept {
+            SquareMatrix<N> I(0);
 
             for (size_t i = 0; i < N; ++i) {
                 I.data[i][i] = 1;
             }
             return I;
         } 
+        inline static constexpr SquareMatrix<N> ZeroMatrix() noexcept {
+            return SquareMatrix<N>(0);
+        }
 
         inline SquareMatrix<N> T() const { return transpose(); }
         inline SquareMatrix<N> Neg1() const { return inverse(); }
-        inline static constexpr SquareMatrix<N> I() { return IndentityMatrix(); }
-        inline static constexpr SquareMatrix<N> O() { return SquareMatrix<N>(0); }
+        inline double det() const { return determinant(); }
+        inline static constexpr SquareMatrix<N> I() noexcept { return IdentityMatrix(); }
+        inline static constexpr SquareMatrix<N> O() noexcept { return SquareMatrix<N>(0); }
         
+    private:
+
+        inline void log(const std::string& func_name, const std::string& message, const Logger::LogLevel& log_level, bool add_timestamp) {
+            Logger::log(
+                "SquareMatrix<" + std::to_string(N) + ">::" + func_name, 
+                message, 
+                log_level, 
+                add_timestamp
+            );
+        }
+
+        template <typename ExceptionType = std::runtime_error>
+        [[noreturn]] inline void log_and_throw(const std::string& func_name, const std::string& message) {
+            Logger::log_and_throw<ExceptionType>(
+                "SquareMatrix<" + std::to_string(N) + ">::" + func_name, 
+                message);
+        }
 };
 
 
